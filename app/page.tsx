@@ -7,6 +7,7 @@ export default function Home() {
   const [name, setName] = useState('');
   const [allEmployees, setAllEmployees] = useState<any[]>([]);
   const [responses, setResponses] = useState<any[]>([]);
+  const [view, setView] = useState<'responded' | 'notResponded'>('responded'); // 어떤 화면을 볼지 결정
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,26 +29,29 @@ export default function Home() {
   };
 
   const respondedNames = responses.map(r => r.name);
+  const notResponded = allEmployees.filter(emp => !respondedNames.includes(emp.name));
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <h1 style={{ textAlign: "center" }}>남부소방서 비상소집 상황판</h1>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
+      <h1>남부소방서 비상소집</h1>
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="성함 입력" style={{ flex: 1, padding: "10px" }} />
-        <button onClick={handleResponse} style={{ padding: "10px 20px", backgroundColor: "#e11d48", color: "white", border: "none" }}>응소하기</button>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="본인 성함 입력" style={{ flex: 1, padding: "10px" }} />
+        <button onClick={handleResponse} style={{ padding: "10px 20px", backgroundColor: "#e11d48", color: "white", border: "none", borderRadius: "5px" }}>응소하기</button>
       </div>
 
-      <h3>명단 (총 {allEmployees.length}명)</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "5px" }}>
-        {allEmployees.map((emp) => (
-          <div key={emp.name} style={{ 
-            padding: "10px", 
-            backgroundColor: respondedNames.includes(emp.name) ? "#22c55e" : "#ef4444", 
-            color: "white", borderRadius: "5px", textAlign: "center" 
-          }}>
-            {emp.name}
-          </div>
-        ))}
+      {/* 탭 버튼 */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <button onClick={() => setView('responded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'responded' ? "#22c55e" : "#ccc" }}>응소자 ({respondedNames.length}명)</button>
+        <button onClick={() => setView('notResponded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'notResponded' ? "#ef4444" : "#ccc" }}>미응소자 ({notResponded.length}명)</button>
+      </div>
+
+      {/* 내용 표시 */}
+      <div style={{ textAlign: "left", padding: "10px", backgroundColor: "#f9f9f9", borderRadius: "5px" }}>
+        {view === 'responded' ? (
+          <ul>{respondedNames.map(n => <li key={n}>{n}</li>)}</ul>
+        ) : (
+          <ul>{notResponded.map(e => <li key={e.name}>{e.name}</li>)}</ul>
+        )}
       </div>
     </div>
   );
