@@ -1,62 +1,67 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+
 export default function Home() {
-  const departments = [
-    { name: '소방서장', count: '1명' },
-    { name: '청문감사담당관', count: '7명' },
-    { name: '소방행정과', count: '9명' },
-    { name: '예방안전과', count: '15명' },
-    { name: '구조구급과', count: '8명' },
-    { name: '현장대응단', count: '23명' },
-  ];
+  const [name, setName] = useState('');
+  const [allEmployees, setAllEmployees] = useState<any[]>([]);
+  const [responses, setResponses] = useState<any[]>([]);
+  const [view, setView] = useState<'responded' | 'notResponded'>('responded');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: employees } = await supabase.from('직원명부').select('*');
+      const { data: res } = await supabase.from('responses').select('*');
+      if (employees) setAllEmployees(employees);
+      if (res) setResponses(res);
+    };
+    fetchData();
+  }, []);
+
+  const handleResponse = async () => {
+    // 1. 명단 존재 여부 확인
+    if (!allEmployees.some(emp => emp.name === name)) {
+      alert('등록된 직원이 아닙니다. 명단을 확인하세요.'); return;
+    }
+    
+    // 2. 중복 응소 확인 (이미 응소 명단에 있는지)
+    if (responses.some(r => r.name === name)) {
+      alert('이미 응소 처리가 완료되었습니다!'); return;
+    }
+
+    const { error } = await supabase.from('responses').insert([{ status: '응소완료', name }]);
+    if (error) alert('기록 실패: ' + error.message);
+    else { alert(name + '님, 응소 완료!'); setName(''); window.location.reload(); }
+  };
+
+  const respondedNames = responses.map(r => r.name);
+  const notResponded = allEmployees.filter(emp => !respondedNames.includes(emp.name));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans max-w-md mx-auto">
-      {/* 상단 훈련 상태바 */}
-      <div className="flex items-center justify-between mb-6">
-        <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold">훈련</span>
-        <span className="text-gray-500">개요 없음</span>
-        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+      <h1 style={{ textAlign: "center" }}>남부소방서 비상소집 상황판</h1>
+      
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="성함 입력" style={{ flex: 1, padding: "10px" }} />
+        <button onClick={handleResponse} style={{ padding: "10px 20px", backgroundColor: "#e11d48", color: "white", border: "none", borderRadius: "5px" }}>응소하기</button>
       </div>
 
-      {/* 로고 및 제목 */}
-      <div className="text-center mb-8">
-        <div className="flex justify-center mb-2">
-           {/* 로고 자리 (이미지 파일이 있다면 <img> 태그 사용) */}
-           <div className="w-16 h-16 bg-blue-900 rounded-lg flex items-center justify-center text-white font-bold">119</div>
-        </div>
-        <h1 className="text-2xl font-bold text-blue-900">중부소방서</h1>
-        <h2 className="text-2xl font-bold text-blue-900">긴급구조통제단</h2>
-        <p className="text-gray-500 mt-4">응소를 위해 소속 부서를 선택하세요</p>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+        <button onClick={() => setView('responded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'responded' ? "#22c55e" : "#ccc" }}>응소자 ({respondedNames.length}명)</button>
+        <button onClick={() => setView('notResponded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'notResponded' ? "#ef4444" : "#ccc" }}>미응소자 ({notResponded.length}명)</button>
       </div>
 
-      {/* 부서 그리드 */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {departments.map((dept) => (
-          <button
-            key={dept.name}
-            className="bg-white p-6 rounded-2xl shadow-[0_4px_6px_rgba(0,0,0,0.15)] border border-gray-100 text-center hover:bg-gray-50 transition-all"
-          >
-            <div className="text-lg font-bold text-gray-800">{dept.name}</div>
-            <div className="text-gray-400 mt-1">{dept.count}</div>
-          </button>
-        ))}
-      </div>
-
-      {/* 하단 통제단 외 직원 입장 */}
-      <div className="bg-blue-100 p-4 rounded-2xl flex items-center border border-blue-200">
-        <span className="text-2xl mr-3">👁️</span>
-        <div>
-          <div className="font-bold text-blue-900">통제단 외 직원 입장</div>
-          <div className="text-sm text-blue-700">구급대원·유관기관 전용</div>
-        </div>
-      </div>
-
-      {/* 관리자 버튼 */}
-      <div className="fixed bottom-6 right-6">
-        <button className="bg-gray-700 text-white px-5 py-3 rounded-full flex items-center shadow-lg font-bold">
-          <span className="mr-2">⚙️</span> 관리자
-        </button>
+      <div style={{ padding: "15px", backgroundColor: "#f9f9f9", borderRadius: "5px" }}>
+        {view === 'responded' ? (
+          <div>
+            {respondedNames.map((n, i) => <div key={i} style={{ padding: "5px", borderBottom: "1px solid #eee" }}>✅ {n}</div>)}
+          </div>
+        ) : (
+          <div>
+            {notResponded.map((e, i) => <div key={i} style={{ padding: "5px", borderBottom: "1px solid #eee" }}>❌ {e.name}</div>)}
+          </div>
+        )}
       </div>
     </div>
   );
