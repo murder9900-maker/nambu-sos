@@ -1,67 +1,43 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 
 export default function Home() {
-  const [name, setName] = useState('');
-  const [allEmployees, setAllEmployees] = useState<any[]>([]);
-  const [responses, setResponses] = useState<any[]>([]);
-  const [view, setView] = useState<'responded' | 'notResponded'>('responded');
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: employees } = await supabase.from('직원명부').select('*');
-      const { data: res } = await supabase.from('responses').select('*');
-      if (employees) setAllEmployees(employees);
-      if (res) setResponses(res);
-    };
-    fetchData();
-  }, []);
-
-  const handleResponse = async () => {
-    // 1. 명단 존재 여부 확인
-    if (!allEmployees.some(emp => emp.name === name)) {
-      alert('등록된 직원이 아닙니다. 명단을 확인하세요.'); return;
-    }
-    
-    // 2. 중복 응소 확인 (이미 응소 명단에 있는지)
-    if (responses.some(r => r.name === name)) {
-      alert('이미 응소 처리가 완료되었습니다!'); return;
-    }
-
-    const { error } = await supabase.from('responses').insert([{ status: '응소완료', name }]);
-    if (error) alert('기록 실패: ' + error.message);
-    else { alert(name + '님, 응소 완료!'); setName(''); window.location.reload(); }
-  };
-
-  const respondedNames = responses.map(r => r.name);
-  const notResponded = allEmployees.filter(emp => !respondedNames.includes(emp.name));
+  const departments = [
+    { name: '소방서장', count: 1 },
+    { name: '청문감사담당관', count: 7 },
+    { name: '소방행정과', count: 9 },
+    { name: '예방안전과', count: 15 },
+    { name: '구조구급과', count: 8 },
+    { name: '현장대응단', count: 23 },
+  ];
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <h1 style={{ textAlign: "center" }}>남부소방서 비상소집 상황판</h1>
-      
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="성함 입력" style={{ flex: 1, padding: "10px" }} />
-        <button onClick={handleResponse} style={{ padding: "10px 20px", backgroundColor: "#e11d48", color: "white", border: "none", borderRadius: "5px" }}>응소하기</button>
+    <div className="min-h-screen bg-gray-50 p-4 font-sans">
+      {/* 헤더 부분 */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-bold text-blue-900 mb-2">남부소방서</h1>
+        <h2 className="text-xl font-bold text-blue-900">긴급구조통제단</h2>
+        <p className="text-gray-500 mt-4">응소를 위해 소속 부서를 선택하세요</p>
       </div>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <button onClick={() => setView('responded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'responded' ? "#22c55e" : "#ccc" }}>응소자 ({respondedNames.length}명)</button>
-        <button onClick={() => setView('notResponded')} style={{ flex: 1, padding: "10px", backgroundColor: view === 'notResponded' ? "#ef4444" : "#ccc" }}>미응소자 ({notResponded.length}명)</button>
+      {/* 부서 선택 버튼 그리드 */}
+      <div className="grid grid-cols-2 gap-4">
+        {departments.map((dept) => (
+          <button
+            key={dept.name}
+            className="bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center hover:bg-blue-50 transition-colors"
+          >
+            <div className="text-lg font-bold text-gray-800">{dept.name}</div>
+            <div className="text-sm text-gray-500 mt-1">{dept.count}명</div>
+          </button>
+        ))}
       </div>
 
-      <div style={{ padding: "15px", backgroundColor: "#f9f9f9", borderRadius: "5px" }}>
-        {view === 'responded' ? (
-          <div>
-            {respondedNames.map((n, i) => <div key={i} style={{ padding: "5px", borderBottom: "1px solid #eee" }}>✅ {n}</div>)}
-          </div>
-        ) : (
-          <div>
-            {notResponded.map((e, i) => <div key={i} style={{ padding: "5px", borderBottom: "1px solid #eee" }}>❌ {e.name}</div>)}
-          </div>
-        )}
+      {/* 하단 공통 영역 */}
+      <div className="mt-8 bg-blue-100 p-4 rounded-xl flex items-center justify-between border border-blue-200">
+        <span className="font-bold text-blue-900">통제단 외 직원 입장</span>
+        <span className="text-xs text-blue-700">구급대원·유관기관 전용</span>
       </div>
     </div>
   );
