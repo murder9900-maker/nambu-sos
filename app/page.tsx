@@ -11,7 +11,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-50 p-4 font-sans">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-900">중부소방서</h1>
+          <h1 className="text-2xl font-bold text-blue-900">남부소방서</h1>
           <h2 className="text-2xl font-bold text-blue-900">긴급구조통제단</h2>
           <p className="text-gray-600 mt-2">응소를 위해 소속 부서를 선택하세요</p>
         </div>
